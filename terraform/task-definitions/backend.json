@@ -1,0 +1,132 @@
+[
+    {
+      "containerDefinitions": [
+        {
+          "name": "nginx",
+          "image": "${var.account}.dkr.ecr.${var.region}.amazonaws.com/vitfor:nginx",
+          "memory": "100",
+          "cpu": "99",
+
+          "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+              "awslogs-group": "/ecs/vitfor-backend",
+              "awslogs-region": "${var.region}",
+              "awslogs-stream-prefix": "ecs"
+            }
+          },
+          "portMappings": [
+            {
+              "hostPort": 80,
+              "protocol": "tcp",
+              "containerPort": 80
+            }
+          ],
+          "secrets": [
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/API_HOST",
+              "name": "API_HOST"
+            }
+          ],
+          
+          "dependsOn": [
+            {
+              "containerName": "web",
+              "condition": "HEALTHY"
+            }
+          ],
+          "essential": true,
+          "readonlyRootFilesystem": false
+        },
+        {
+
+          "name": "web",
+          "image": "${var.account}.dkr.ecr.${var.region}.amazonaws.com/vitfor:web",
+          "memory": "100",
+          "cpu": "99",
+          "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+              "awslogs-group": "/ecs/vitfor-backend",
+              "awslogs-region": "${var.region}",
+              "awslogs-stream-prefix": "ecs"
+            }
+          },
+          "command": [
+            "exec gunicorn auth_system.wsgi:application --bind 0.0.0.0:8000"
+          ],
+          "environment": [
+            {
+              "name": "DEBUG",
+              "value": "1"
+            }
+          ],
+          "secrets": [
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/DJANGO_ALLOWED_HOSTS",
+              "name": "DJANGO_ALLOWED_HOSTS"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/DJANGO_SUPERUSER_EMAIL",
+              "name": "DJANGO_SUPERUSER_EMAIL"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/DJANGO_SUPERUSER_EMAIL",
+              "name": "DJANGO_SUPERUSER_EMAIL_2"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/DJANGO_SUPERUSER_PASSWORD",
+              "name": "DJANGO_SUPERUSER_PASSWORD"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/DOMAIN",
+              "name": "DOMAIN"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/SQL_DATABASE",
+              "name": "POSTGRES_DATABASE"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/POSTGRES_DB",
+              "name": "POSTGRES_DB"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/SQL_HOST",
+              "name": "POSTGRES_HOST"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/SQL_PASSWORD",
+              "name": "POSTGRES_PASSWORD"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/SQL_PORT",
+              "name": "POSTGRES_PORT"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/SQL_USER",
+              "name": "POSTGRES_USER"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/SECRET_KEY",
+              "name": "SECRET_KEY"
+            },
+            {
+              "valueFrom": "arn:aws:ssm:${var.region}:${var.account}:parameter/vitfor/prod/SQL_ENGINE",
+              "name": "SQL_ENGINE"
+            }
+          ],
+          "healthCheck": {
+            "retries": 4,
+            "command": [
+              "CMD-SHELL",
+              "curl -v --insecure --anyauth --user username:password -H \"Accept: application/json\" -H \"Content-Type: application/json\" -X GET localhost:8000/api/health/ || exit 1"
+            ],
+            "timeout": 10,
+            "interval": 30,
+            "startPeriod": 10
+          },
+          "essential": true
+        }
+      ]
+    }
+]

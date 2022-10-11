@@ -1,0 +1,46 @@
+[
+  {
+    // "containerDefinitions": [
+      {
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/frontend",
+            "awslogs-region": "${var.region}",
+            "awslogs-stream-prefix": "ecs"
+          }
+        },
+        "portMappings": [
+          {
+            "hostPort": 3000,
+            "protocol": "tcp",
+            "containerPort": 3000
+          },
+          {
+            "hostPort": 80,
+            "protocol": "tcp",
+            "containerPort": 80
+          }
+        ],
+        "cpu": 0,
+        "image": "${var.account}.dkr.ecr.${var.region}.amazonaws.com/vitfor-frontend:frontend",
+        "essential": true,
+        "name": "frontend"
+      },
+      {
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/frontend",
+            "awslogs-region": "${var.region}",
+            "awslogs-stream-prefix": "ecs"
+          }
+        },
+        "cpu": 0,
+        "image": "${var.account}.dkr.ecr.${var.region}.amazonaws.com/vitfor-frontend:nginx",
+        "essential": true,
+        "name": "nginx"
+      }
+    // ]
+  // }
+]
